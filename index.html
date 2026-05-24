@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota144 — Gerador de Abordagem</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:       #0a0a08;
+  --surface:  #111110;
+  --surface2: #181816;
+  --surface3: #1e1e1b;
+  --border:   #2a2a24;
+  --border2:  #383830;
+  --gold:     #c9a84c;
+  --gold-lt:  #e2c46e;
+  --gold-dim: rgba(201,168,76,0.10);
+  --gold-dim2:rgba(201,168,76,0.06);
+  --white:    #f0efe8;
+  --muted:    #5a5950;
+  --muted2:   #7a7868;
+  --text:     #e8e6dc;
+  --ok:       #6abf7b;
+  --warn:     #d4804a;
+  --danger:   #c95f5f;
+  /* cluster colors — warm tones to match brand */
+  --c1:#c9a84c; --c1bg:rgba(201,168,76,0.08);  --c1b:rgba(201,168,76,0.30);
+  --c2:#8fb8d4; --c2bg:rgba(143,184,212,0.08); --c2b:rgba(143,184,212,0.30);
+  --c3:#d4804a; --c3bg:rgba(212,128,74,0.08);  --c3b:rgba(212,128,74,0.30);
+  --c4:#a889c9; --c4bg:rgba(168,137,201,0.08); --c4b:rgba(168,137,201,0.30);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh}
+
+/* ─── TOPBAR ─── */
+.topbar{
+  display:flex;align-items:center;gap:16px;
+  padding:18px 32px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface);
+  position:sticky;top:0;z-index:10;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-shield{
+  width:32px;height:32px;
+  background:var(--gold);
+  clip-path:polygon(50% 0%,100% 15%,100% 70%,50% 100%,0% 70%,0% 15%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:13px;color:#000;
+}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:.02em}
+.logo-text span{color:var(--gold)}
+.topbar-sep{width:1px;height:28px;background:var(--border);margin:0 4px}
+.topbar-sub{font-size:12px;color:var(--muted2);font-family:'Barlow',sans-serif}
+.history-btn{
+  margin-left:auto;background:transparent;
+  border:1px solid var(--border2);color:var(--muted2);
+  font-family:'DM Mono',monospace;font-size:11px;
+  padding:7px 16px;cursor:pointer;transition:all .15s;
+  letter-spacing:.04em;
+}
+.history-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ─── WRAP ─── */
+.wrap{max-width:820px;margin:0 auto;padding:36px 24px 80px}
+
+/* ─── SECTION LABEL ─── */
+.slabel{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.slabel::before{content:'';width:6px;height:6px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
+.slabel::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── UPLOAD PAIR ─── */
+.upload-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.upload-label{font-size:11px;color:var(--muted2);margin-bottom:6px;font-family:'DM Mono',monospace;letter-spacing:.04em}
+
+.dropzone{
+  border:1px solid var(--border2);background:var(--surface);
+  padding:36px 20px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.dropzone:hover,.dropzone.over{border-color:var(--gold);background:var(--gold-dim2)}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dropzone-icon{font-size:22px;opacity:.4;margin-bottom:2px}
+.dropzone h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.04em;color:var(--white)}
+.dropzone p{font-size:11px;color:var(--muted)}
+
+.file-ready{
+  background:var(--surface2);border:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;
+}
+.file-ready-icon{font-size:18px}
+.file-ready-name{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold);word-break:break-all}
+.file-ready-size{font-size:10px;color:var(--muted);margin-top:2px}
+.file-ready-rm{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;transition:color .15s}
+.file-ready-rm:hover{color:var(--danger)}
+
+/* ─── DATA PREVIEW ─── */
+.data-preview{background:var(--surface);border:1px solid var(--border);margin-bottom:24px;display:none}
+.data-preview.show{display:block}
+.dp-head{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.dp-head-diamond{width:8px;height:8px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
+.dp-lead-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.04em;color:var(--gold-lt)}
+.dp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.dp-item{background:var(--surface2);padding:10px 14px}
+.dp-item-label{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.dp-item-val{font-size:13px;font-weight:600;color:var(--white)}
+.dp-tags{padding:12px 20px;display:flex;flex-wrap:wrap;gap:6px}
+.dp-tag{font-size:10px;font-family:'DM Mono',monospace;background:var(--surface3);border:1px solid var(--border2);padding:3px 9px;color:var(--muted2)}
+.dp-tag.gold{color:var(--gold);border-color:rgba(201,168,76,.3);background:var(--gold-dim2)}
+
+/* ─── BUTTON ─── */
+.btn-gerar{
+  width:100%;background:var(--gold);color:#000;border:none;
+  padding:16px;
+  font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;
+  letter-spacing:.12em;cursor:pointer;transition:all .15s;
+  text-transform:uppercase;margin-top:4px;
+}
+.btn-gerar:hover:not(:disabled){background:var(--gold-lt)}
+.btn-gerar:disabled{opacity:.3;cursor:not-allowed}
+
+.errmsg{display:none;background:rgba(201,95,95,.08);border:1px solid rgba(201,95,95,.25);padding:12px 16px;font-size:12px;color:var(--danger);font-family:'DM Mono',monospace;margin-top:10px}
+.errmsg.show{display:block}
+
+/* ─── LOADING ─── */
+#screen-loading{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:420px;gap:28px}
+#screen-loading.show{display:flex}
+.spinner{width:36px;height:36px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-steps{display:flex;flex-direction:column;gap:12px}
+.lstep{display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);transition:color .3s}
+.lstep.active{color:var(--gold)}
+.lstep.done{color:var(--ok)}
+.ldot{width:6px;height:6px;background:var(--border2);transition:background .3s;flex-shrink:0;transform:rotate(45deg)}
+.lstep.active .ldot{background:var(--gold);animation:blink 1s infinite}
+.lstep.done .ldot{background:var(--ok)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── RESULT ─── */
+#screen-result{display:none}
+#screen-result.show{display:block}
+
+.result-header{
+  background:var(--surface);border:1px solid var(--border);
+  padding:22px 26px;display:flex;align-items:flex-start;gap:18px;margin-bottom:3px;
+}
+.r-avatar{
+  width:48px;height:48px;
+  clip-path:polygon(50% 0%,100% 15%,100% 70%,50% 100%,0% 70%,0% 15%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;flex-shrink:0;
+}
+.r-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.04em;color:var(--white);margin-bottom:3px}
+.r-sub{font-size:12px;color:var(--muted2)}
+.r-badges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rbadge{font-size:10px;font-family:'DM Mono',monospace;padding:3px 10px;letter-spacing:.05em}
+.temp-q{background:rgba(201,95,95,.12);color:#c95f5f;border:1px solid rgba(201,95,95,.3)}
+.temp-m{background:rgba(201,168,76,.10);color:var(--gold);border:1px solid rgba(201,168,76,.3)}
+.temp-f{background:rgba(143,184,212,.10);color:#8fb8d4;border:1px solid rgba(143,184,212,.3)}
+
+/* stats */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:3px}
+.stat{background:var(--surface);border:1px solid var(--border);padding:14px 16px}
+.stat-l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-family:'DM Mono',monospace}
+.stat-v{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;letter-spacing:.02em}
+.stat-s{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* insight bars */
+.ibar{display:flex;gap:14px;align-items:flex-start;padding:14px 20px;margin-bottom:3px}
+.ibar-l{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+.ibar-t{font-size:13px;line-height:1.55;color:var(--text)}
+
+/* tabs */
+.tabs{display:flex;gap:2px;margin-top:26px;margin-bottom:2px}
+.tab{
+  padding:10px 18px;background:var(--surface);border:1px solid var(--border);border-bottom:none;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted2);cursor:pointer;transition:all .15s;
+}
+.tab:hover{color:var(--white)}
+.tab.on{background:var(--surface2);color:var(--gold);border-color:var(--border2)}
+.tabp{display:none}.tabp.on{display:block}
+
+/* script blocks */
+.sblock{background:var(--surface2);border:1px solid var(--border);margin-bottom:3px}
+.sblock-top{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border)}
+.sphase{display:flex;align-items:center;gap:10px}
+.stag{
+  font-family:'DM Mono',monospace;font-size:10px;
+  background:var(--surface3);color:var(--muted);
+  padding:3px 8px;letter-spacing:.06em;
+  border:1px solid var(--border);
+}
+.sname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--white)}
+.audio-pill{
+  font-size:10px;font-family:'DM Mono',monospace;
+  color:var(--gold);background:var(--gold-dim2);
+  border:1px solid rgba(201,168,76,.25);padding:2px 9px;
+}
+.copybtn{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;
+  letter-spacing:.06em;padding:5px 12px;cursor:pointer;transition:all .15s;margin-left:8px;
+}
+.copybtn:hover{border-color:var(--gold);color:var(--gold)}
+.copybtn.ok{border-color:var(--ok);color:var(--ok)}
+.sbody{padding:18px 22px;font-family:'DM Mono',monospace;font-size:12.5px;line-height:1.9;white-space:pre-wrap;word-break:break-word;color:var(--text)}
+
+/* objections */
+.obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.ocard{background:var(--surface2);border:1px solid var(--border)}
+.ocard-top{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
+.ocard-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;color:var(--white)}
+.obody{padding:14px 16px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text)}
+
+.btn-new{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted2);font-family:'DM Mono',monospace;font-size:11px;
+  padding:10px 20px;cursor:pointer;transition:all .15s;letter-spacing:.04em;
+}
+.btn-new:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ─── HISTORY PANEL ─── */
+#history-panel{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,8,6,.88)}
+#history-panel.show{display:block}
+.hpanel{position:absolute;right:0;top:0;bottom:0;width:380px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column}
+.hpanel-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.hpanel-head h3{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;letter-spacing:.06em;color:var(--white)}
+.hclose{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;transition:color .15s}
+.hclose:hover{color:var(--gold)}
+.hlist{flex:1;overflow:auto;padding:12px}
+.hitem{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);margin-bottom:3px;cursor:pointer;transition:all .15s}
+.hitem:hover{border-color:var(--gold-dim);background:var(--surface3)}
+.havatar{width:34px;height:34px;clip-path:polygon(50% 0%,100% 15%,100% 70%,50% 100%,0% 70%,0% 15%);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:12px;flex-shrink:0}
+.hinfo h4{font-size:13px;font-weight:600;margin-bottom:2px;color:var(--white)}
+.hinfo p{font-size:11px;color:var(--muted2)}
+.hcluster{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;text-align:right}
+.htime{font-size:10px;color:var(--muted);margin-top:3px}
+.hempty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px}
+
+/* divider between upload sections */
+.section-gap{height:24px}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-shield">R</div>
+    <div class="logo-text">ROTA<span>144</span></div>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-sub">Sistema de Inteligência de Vendas</div>
+  <button class="history-btn" onclick="toggleHistory()">▣ Histórico</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ── UPLOAD SCREEN ── -->
+  <div id="screen-upload">
+
+    <div class="slabel" style="margin-bottom:20px">01 — Arquivos do Lead</div>
+
+    <div class="upload-pair">
+      <!-- PDF -->
+      <div>
+        <div class="upload-label">📄 Relatório do Simulado (PDF)</div>
+        <div class="dropzone" id="dz-pdf">
+          <input type="file" id="in-pdf" accept=".pdf" onchange="loadPDF(event)">
+          <span class="dropzone-icon">📄</span>
+          <h3>ARRASTE O PDF AQUI</h3>
+          <p>Relatório gerado pela plataforma</p>
+        </div>
+        <div class="file-ready" id="fr-pdf" style="display:none">
+          <span class="file-ready-icon">📄</span>
+          <div>
+            <div class="file-ready-name" id="pdf-name"></div>
+            <div class="file-ready-size" id="pdf-size"></div>
+          </div>
+          <button class="file-ready-rm" onclick="rmPDF()">✕</button>
+        </div>
+      </div>
+
+      <!-- JSON/CSV -->
+      <div>
+        <div class="upload-label">📊 Dados do Pixel (JSON ou CSV)</div>
+        <div class="dropzone" id="dz-json">
+          <input type="file" id="in-json" accept=".json,.csv" onchange="loadPixel(event)">
+          <span class="dropzone-icon">📊</span>
+          <h3>ARRASTE O JSON/CSV AQUI</h3>
+          <p>Dados exportados do pixel</p>
+        </div>
+        <div class="file-ready" id="fr-json" style="display:none">
+          <span class="file-ready-icon">📊</span>
+          <div>
+            <div class="file-ready-name" id="json-name"></div>
+            <div class="file-ready-size" id="json-size"></div>
+          </div>
+          <button class="file-ready-rm" onclick="rmPixel()">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data preview -->
+    <div class="data-preview" id="data-preview">
+      <div class="dp-head">
+        <div class="dp-head-diamond"></div>
+        <div class="dp-lead-name" id="dp-lead-name">—</div>
+      </div>
+      <div class="dp-grid" id="dp-grid"></div>
+      <div class="dp-tags" id="dp-tags"></div>
+    </div>
+
+    <div class="section-gap"></div>
+    <div class="slabel">02 — Gerar Abordagem</div>
+
+    <button class="btn-gerar" id="btn-gerar" onclick="gerar()" disabled>
+      ⚡ GERAR INTELIGÊNCIA DE ABORDAGEM
+    </button>
+    <div class="errmsg" id="errmsg"></div>
+  </div>
+
+  <!-- ── LOADING ── -->
+  <div id="screen-loading">
+    <div class="spinner"></div>
+    <div class="load-steps">
+      <div class="lstep" id="ls0"><div class="ldot"></div>Lendo relatório do simulado...</div>
+      <div class="lstep" id="ls1"><div class="ldot"></div>Analisando padrão comportamental...</div>
+      <div class="lstep" id="ls2"><div class="ldot"></div>Cruzando com dados do pixel...</div>
+      <div class="lstep" id="ls3"><div class="ldot"></div>Identificando cluster e ponto cego...</div>
+      <div class="lstep" id="ls4"><div class="ldot"></div>Gerando scripts de abordagem...</div>
+      <div class="lstep" id="ls5"><div class="ldot"></div>Preparando respostas a objeções...</div>
+    </div>
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div id="screen-result"></div>
+
+</div>
+
+<!-- ── HISTORY PANEL ── -->
+<div id="history-panel" onclick="closeHistoryOutside(event)">
+  <div class="hpanel">
+    <div class="hpanel-head">
+      <h3>HISTÓRICO DA SESSÃO</h3>
+      <button class="hclose" onclick="toggleHistory()">✕</button>
+    </div>
+    <div class="hlist" id="hlist"></div>
+  </div>
+</div>
+
+<script>
+let pdfB64=null, pixelData=null, history=[]
+
+// drag & drop
+;['dz-pdf','dz-json'].forEach(id=>{
+  const el=document.getElementById(id)
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over')})
+  el.addEventListener('dragleave',()=>el.classList.remove('over'))
+  el.addEventListener('drop',e=>{
+    e.preventDefault();el.classList.remove('over')
+    const f=e.dataTransfer.files[0]
+    if(!f)return
+    if(id==='dz-pdf'&&f.type==='application/pdf')loadPDFFile(f)
+    if(id==='dz-json')loadPixelFile(f)
+  })
+})
+
+// PDF
+function loadPDF(e){if(e.target.files[0])loadPDFFile(e.target.files[0])}
+function loadPDFFile(file){
+  const r=new FileReader()
+  r.onload=ev=>{
+    pdfB64=ev.result.split(',')[1]
+    document.getElementById('dz-pdf').style.display='none'
+    document.getElementById('fr-pdf').style.display='flex'
+    document.getElementById('pdf-name').textContent=file.name
+    document.getElementById('pdf-size').textContent=(file.size/1024).toFixed(1)+' KB'
+    checkReady()
+  }
+  r.readAsDataURL(file)
+}
+function rmPDF(){
+  pdfB64=null
+  document.getElementById('in-pdf').value=''
+  document.getElementById('dz-pdf').style.display='flex'
+  document.getElementById('fr-pdf').style.display='none'
+  checkReady()
+}
+
+// PIXEL
+function loadPixel(e){if(e.target.files[0])loadPixelFile(e.target.files[0])}
+function loadPixelFile(file){
+  const r=new FileReader()
+  r.onload=ev=>{
+    try{
+      const txt=ev.result
+      if(file.name.endsWith('.csv')){pixelData=parseCSV(txt)}
+      else{const p=JSON.parse(txt);pixelData=p.leads?p.leads[0]:(Array.isArray(p)?p[0]:p)}
+      document.getElementById('dz-json').style.display='none'
+      document.getElementById('fr-json').style.display='flex'
+      document.getElementById('json-name').textContent=file.name
+      document.getElementById('json-size').textContent=(file.size/1024).toFixed(1)+' KB'
+      renderPreview()
+      checkReady()
+    }catch(e){alert('Arquivo inválido. Verifique o formato JSON ou CSV.')}
+  }
+  r.readAsText(file)
+}
+function rmPixel(){
+  pixelData=null
+  document.getElementById('in-json').value=''
+  document.getElementById('dz-json').style.display='flex'
+  document.getElementById('fr-json').style.display='none'
+  document.getElementById('data-preview').classList.remove('show')
+  checkReady()
+}
+
+function parseCSV(txt){
+  const lines=txt.trim().split('\n')
+  const headers=lines[0].split(',').map(h=>h.trim().replace(/"/g,''))
+  const vals=lines[1].split(',').map(v=>v.trim().replace(/"/g,''))
+  const obj={}
+  headers.forEach((h,i)=>{obj[h]=vals[i]||''})
+  return{
+    nome:obj.nome||obj.name||obj.candidato||'',
+    whatsapp:obj.whatsapp||obj.telefone||'',
+    origem:obj.origem||obj.source||obj.canal||'',
+    tempo_plataforma:obj.tempo_plataforma||'',
+    pixel:{
+      sessoes_apos_simulado:obj.sessoes_apos_simulado||obj.sessoes||'0',
+      dias_desde_acesso:obj.dias_desde_acesso||'0',
+      tempo_medio_sessao_min:obj.tempo_medio_sessao_min||'0',
+      visitas_pagina_precos:obj.visitas_pagina_precos||'0',
+      visitas_como_funciona:obj.visitas_como_funciona||'0',
+      checkout_abandonado:obj.checkout_abandonado||'Não',
+      paginas_visitadas:obj.paginas_visitadas?obj.paginas_visitadas.split(';'):[]
+    },
+    simulado:{
+      acertos:obj.acertos||'',erros:obj.erros||'',omissoes:obj.omissoes||'',
+      total:obj.total||'',tempo_medio_questao_min:obj.tempo_medio_questao||'',
+      desempenho_por_area:{}
+    }
+  }
+}
+
+function renderPreview(){
+  if(!pixelData)return
+  const p=pixelData, px=p.pixel||{}, sim=p.simulado||{}
+  document.getElementById('dp-lead-name').textContent=p.nome||'Lead'
+  const items=[
+    ['WhatsApp',p.whatsapp||'—'],
+    ['Origem',p.origem||'—'],
+    ['Na plataforma',p.tempo_plataforma||'—'],
+    ['Sessões pós-simulado',px.sessoes_apos_simulado??'—'],
+    ['Dias sem acessar',px.dias_desde_acesso??'—'],
+    ['Visitas pág. preços',px.visitas_pagina_precos??'—'],
+    ['Checkout abandonado',px.checkout_abandonado??'—'],
+    ['Acertos / Erros / Omiss.',sim.acertos?`${sim.acertos} / ${sim.erros} / ${sim.omissoes}`:'—'],
+    ['Tempo médio/questão',sim.tempo_medio_questao_min?sim.tempo_medio_questao_min+'min':'—'],
+  ]
+  document.getElementById('dp-grid').innerHTML=items.map(([l,v])=>`
+    <div class="dp-item">
+      <div class="dp-item-label">${l}</div>
+      <div class="dp-item-val">${v}</div>
+    </div>`).join('')
+  const pages=Array.isArray(px.paginas_visitadas)?px.paginas_visitadas:[]
+  const areas=sim.desempenho_por_area||{}
+  let tags=pages.map(pg=>`<span class="dp-tag">${pg}</span>`).join('')
+  tags+=Object.keys(areas).map(k=>`<span class="dp-tag gold">${k}: ${areas[k]}</span>`).join('')
+  document.getElementById('dp-tags').innerHTML=tags
+  document.getElementById('data-preview').classList.add('show')
+}
+
+function checkReady(){
+  document.getElementById('btn-gerar').disabled=!(pdfB64&&pixelData)
+}
+
+// GERAR
+async function gerar(){
+  document.getElementById('errmsg').classList.remove('show')
+  document.getElementById('screen-upload').style.display='none'
+  document.getElementById('screen-loading').classList.add('show')
+  document.getElementById('screen-result').classList.remove('show')
+  animSteps()
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:buildPrompt(),
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:pdfB64}},
+          {type:'text',text:`Dados completos do lead e pixel:\n${JSON.stringify(pixelData,null,2)}\n\nAnalise o PDF junto com esses dados e gere a inteligência de abordagem. Responda SOMENTE com o JSON, sem markdown.`}
+        ]}]
+      })
+    })
+    if(!res.ok)throw new Error('API '+res.status)
+    const data=await res.json()
+    const raw=data.content.map(b=>b.text||'').join('')
+    const result=JSON.parse(raw.replace(/```json|```/g,'').trim())
+    result._pixelData=pixelData
+    result._ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    history.unshift(result)
+    document.getElementById('screen-loading').classList.remove('show')
+    const sr=document.getElementById('screen-result')
+    sr.innerHTML=buildResult(result)
+    sr.classList.add('show')
+    sr.style.display='block'
+  }catch(err){
+    document.getElementById('screen-loading').classList.remove('show')
+    document.getElementById('screen-upload').style.display='block'
+    const e=document.getElementById('errmsg')
+    e.textContent='Erro ao gerar: '+err.message
+    e.classList.add('show')
+  }
+}
+
+function buildPrompt(){
+  return `Você é especialista em inteligência comportamental e vendas consultivas para o Rota144 — plataforma premium de preparação para Delegado de Polícia Civil.
+
+Você recebe: (1) PDF do relatório do simulado e (2) dados de comportamento digital via pixel. Cruze os dois e gere abordagem WhatsApp cirúrgica.
+
+CLUSTERS:
+- CLUSTER 1 (Alto Conhecimento + Baixa Precisão): acerta diretas, trava em dúvida média, perde rendimento no final
+- CLUSTER 2 (Excesso de Cautela): omite demais, medo de errar, perde pontos por não marcar
+- CLUSTER 3 (Impulsivo): responde rápido, cai em armadilhas Cebraspe, erra assertivas parciais
+- CLUSTER 4 (Inconsistente): oscila entre blocos, performance instável
+
+TEMPERATURA (baseada no pixel):
+- QUENTE: voltou 3+ vezes, visitou preços 2+, acesso recente ≤3 dias
+- MORNO: algum retorno mas engajamento moderado
+- FRIO: sumiu, não voltou ou faz muitos dias
+
+REGRAS:
+- NUNCA "você foi mal" → "seu padrão mostra"
+- NUNCA "estude mais" → use: padrão cognitivo, tomada de decisão sob pressão, comportamento de prova, leitura estratégica, ponto cego, risco invisível
+- Leads QUENTES: referencie engajamento na plataforma sutilmente, sem parecer monitoramento
+- Use DADOS REAIS do simulado e pixel nos scripts
+- Oferta é sempre consequência lógica do diagnóstico
+
+RESPONDA SOMENTE EM JSON sem markdown:
+{"nome":"","whatsapp":"","cluster":1,"cluster_nome":"","cluster_cor":"c1","temperatura":"quente","resumo_perfil":"","ponto_cego":"","insight_chave":"","sinal_pixel":"","melhor_horario":"","alerta_vendedor":"","fase1_abertura":"","fase1_audio":true,"fase1_duracao":"50s","fase2_perguntas":["",""],"fase3_diagnostico":"","fase4_oferta":"","obj_preco":"","obj_material":"","obj_tempo":"","obj_pensar":""}`
+}
+
+// RENDER RESULT
+const CC={
+  c1:{color:'var(--c1)',bg:'var(--c1bg)',border:'var(--c1b)',av:'rgba(201,168,76,.18)'},
+  c2:{color:'var(--c2)',bg:'var(--c2bg)',border:'var(--c2b)',av:'rgba(143,184,212,.15)'},
+  c3:{color:'var(--c3)',bg:'var(--c3bg)',border:'var(--c3b)',av:'rgba(212,128,74,.15)'},
+  c4:{color:'var(--c4)',bg:'var(--c4bg)',border:'var(--c4b)',av:'rgba(168,137,201,.15)'}
+}
+
+function buildResult(d){
+  const c=CC[d.cluster_cor]||CC.c1
+  const tCls={quente:'temp-q',morno:'temp-m',frio:'temp-f'}[d.temperatura]||'temp-m'
+  const tLbl={quente:'🔥 Lead Quente',morno:'🌡 Lead Morno',frio:'❄ Lead Frio'}[d.temperatura]||'🌡 Morno'
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;letter-spacing:.06em;color:var(--white)">ABORDAGEM GERADA</div>
+        <div style="font-size:12px;color:var(--muted2);margin-top:3px">Scripts prontos para WhatsApp</div>
+      </div>
+      <button class="btn-new" onclick="novaAnalise()">← Nova análise</button>
+    </div>
+
+    <div class="result-header">
+      <div class="r-avatar" style="background:${c.av};color:${c.color}">${ini(d.nome)}</div>
+      <div>
+        <div class="r-name">${d.nome||'—'}</div>
+        <div class="r-sub">${d.whatsapp||''} ${d._pixelData?.origem?'· '+d._pixelData.origem:''}</div>
+        <div class="r-badges">
+          <span class="rbadge ${tCls}">${tLbl}</span>
+          <span class="rbadge" style="background:${c.bg};color:${c.color};border:1px solid ${c.border}">CLUSTER ${d.cluster} — ${d.cluster_nome}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="stat-l">Ponto cego</div><div class="stat-v" style="font-size:13px;line-height:1.3">${(d.ponto_cego||'').substring(0,48)}${(d.ponto_cego||'').length>48?'...':''}</div></div>
+      <div class="stat"><div class="stat-l">Sinal do pixel</div><div class="stat-v" style="font-size:13px;line-height:1.3">${(d.sinal_pixel||'').substring(0,48)}${(d.sinal_pixel||'').length>48?'...':''}</div></div>
+      <div class="stat"><div class="stat-l">Melhor horário</div><div class="stat-v" style="font-size:15px">${d.melhor_horario||'—'}</div></div>
+      <div class="stat"><div class="stat-l">Cluster</div><div class="stat-v" style="color:${c.color}">${d.cluster}</div><div class="stat-s">${d.cluster_nome}</div></div>
+    </div>
+
+    <div class="ibar" style="background:var(--gold-dim2);border-left:3px solid var(--gold);margin-bottom:3px">
+      <span class="ibar-l" style="color:var(--gold)">◆ Insight</span>
+      <span class="ibar-t">${d.insight_chave||'—'}</span>
+    </div>
+    <div class="ibar" style="background:rgba(212,128,74,.06);border-left:3px solid var(--warn);margin-bottom:3px">
+      <span class="ibar-l" style="color:var(--warn)">▲ Vendedor</span>
+      <span class="ibar-t">${d.alerta_vendedor||'—'}</span>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="switchTab('scripts',this)">FLUXO WHATSAPP</button>
+      <button class="tab" onclick="switchTab('obj',this)">OBJEÇÕES</button>
+    </div>
+
+    <div class="tabp on" id="tab-scripts">
+      ${sb('01','ABERTURA',d.fase1_abertura,d.fase1_audio,d.fase1_duracao)}
+      ${qb(d.fase2_perguntas)}
+      ${sb('03','DIAGNÓSTICO',d.fase3_diagnostico,false)}
+      ${sb('04','OFERTA',d.fase4_oferta,false)}
+    </div>
+    <div class="tabp" id="tab-obj">
+      <div class="obj-grid">
+        ${ob('💸 ESTÁ CARO',d.obj_preco)}
+        ${ob('📚 JÁ TENHO MATERIAL',d.obj_material)}
+        ${ob('⏱ NÃO TENHO TEMPO',d.obj_tempo)}
+        ${ob('🤔 DEIXA EU PENSAR',d.obj_pensar)}
+      </div>
+    </div>`
+}
+
+function sb(num,title,content,audio,dur){
+  const id='s'+Math.random().toString(36).substr(2,8)
+  return `<div class="sblock">
+    <div class="sblock-top">
+      <div class="sphase">
+        <span class="stag">FASE ${num}</span>
+        <span class="sname">${title}</span>
+        ${audio?`<span class="audio-pill">🎙 ÁUDIO · ${dur}</span>`:''}
+      </div>
+      <button class="copybtn" onclick="cp('${id}',this)">COPIAR</button>
+    </div>
+    <div class="sbody" id="${id}">${esc(content||'—')}</div>
+  </div>`
+}
+function qb(qs){
+  const id='q'+Math.random().toString(36).substr(2,8)
+  const txt=(qs||[]).map((q,i)=>`[${i+1}] ${q}`).join('\n')
+  return `<div class="sblock">
+    <div class="sblock-top">
+      <div class="sphase"><span class="stag">FASE 02</span><span class="sname">PERGUNTAS DIAGNÓSTICAS</span></div>
+      <button class="copybtn" onclick="cp('${id}',this)">COPIAR</button>
+    </div>
+    <div class="sbody" id="${id}">${esc(txt)}</div>
+  </div>`
+}
+function ob(title,content){
+  const id='o'+Math.random().toString(36).substr(2,8)
+  return `<div class="ocard">
+    <div class="ocard-top"><span class="ocard-title">${title}</span><button class="copybtn" onclick="cp('${id}',this)">COPIAR</button></div>
+    <div class="obody" id="${id}">${esc(content||'—')}</div>
+  </div>`
+}
+function switchTab(name,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'))
+  document.querySelectorAll('.tabp').forEach(p=>p.classList.remove('on'))
+  btn.classList.add('on')
+  document.getElementById('tab-'+name).classList.add('on')
+}
+function cp(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id)?.innerText||'').then(()=>{
+    btn.textContent='COPIADO ✓';btn.classList.add('ok')
+    setTimeout(()=>{btn.textContent='COPIAR';btn.classList.remove('ok')},2000)
+  })
+}
+
+// HISTORY
+function toggleHistory(){
+  const p=document.getElementById('history-panel')
+  p.classList.toggle('show')
+  if(p.classList.contains('show'))renderHistory()
+}
+function closeHistoryOutside(e){if(e.target===document.getElementById('history-panel'))toggleHistory()}
+function renderHistory(){
+  const el=document.getElementById('hlist')
+  if(!history.length){el.innerHTML='<div class="hempty">Nenhuma análise ainda.</div>';return}
+  el.innerHTML=history.map((d,i)=>{
+    const c=CC[d.cluster_cor]||CC.c1
+    return `<div class="hitem" onclick="viewH(${i})">
+      <div class="havatar" style="background:${c.av};color:${c.color}">${ini(d.nome)}</div>
+      <div class="hinfo"><h4>${d.nome||'—'}</h4><p>${d.cluster_nome||''}</p></div>
+      <div class="hcluster"><span style="color:${c.color}">C${d.cluster}</span><div class="htime">${d._ts}</div></div>
+    </div>`
+  }).join('')
+}
+function viewH(i){
+  toggleHistory()
+  document.getElementById('screen-upload').style.display='none'
+  document.getElementById('screen-loading').classList.remove('show')
+  const sr=document.getElementById('screen-result')
+  sr.innerHTML=buildResult(history[i])
+  sr.classList.add('show')
+  sr.style.display='block'
+}
+function novaAnalise(){
+  document.getElementById('screen-result').classList.remove('show')
+  document.getElementById('screen-result').style.display='none'
+  document.getElementById('screen-upload').style.display='block'
+}
+
+// LOADING STEPS
+function animSteps(){
+  for(let i=0;i<6;i++){const s=document.getElementById('ls'+i);s.classList.remove('active','done')}
+  document.getElementById('ls0').classList.add('active')
+  let cur=0
+  const t=setInterval(()=>{
+    if(cur<5){
+      document.getElementById('ls'+cur).classList.remove('active')
+      document.getElementById('ls'+cur).classList.add('done')
+      cur++
+      document.getElementById('ls'+cur).classList.add('active')
+    }else clearInterval(t)
+  },900)
+}
+
+// UTILS
+function ini(n){return(n||'?').split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('')}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+</script>
+</body>
+</html>
