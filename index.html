@@ -501,8 +501,8 @@ async function gerar(){
   document.getElementById('screen-result').classList.remove('show')
   animSteps()
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json','x-api-key':atob('c2stYW50LWFwaTAzLUE0NGY4cVF3S1dJTTl1c1VtblJsWVl1MG95a2dQMFJXUnJPQVE5Um5EZDUEV1NFOUlOYXk5cHRCbkNkV1BJNklNTEZBOEZla3p6MDlTUmdhTFpURzY3TDZ3LXhRSVFqUUFB'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    const res=await fetch('/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',max_tokens:1000,
         system:buildPrompt(),
